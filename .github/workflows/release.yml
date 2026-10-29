@@ -1,0 +1,74 @@
+# Выпуск версии: тег vX.Y.Z → .deb в Releases, apt-репозиторий на GitHub Pages, пакет в AUR.
+# Секреты репозитория: APT_GPG_KEY (обязателен), AUR_SSH_KEY (если нет — шаг AUR пропускается).
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    env:
+      AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version matches tag
+        run: |
+          VER=$(python3 kachaning.py --version)
+          test "v$VER" = "$GITHUB_REF_NAME" || { echo "::error::kachaning.py says $VER, tag is $GITHUB_REF_NAME"; exit 1; }
+          grep -q "^pkgver=$VER$" packaging/arch/PKGBUILD || { echo "::error::PKGBUILD pkgver is not $VER"; exit 1; }
+          echo "VER=$VER" >> "$GITHUB_ENV"
+
+      - name: Tests
+        run: python3 tests/test_core.py
+
+      - name: Build .deb
+        run: |
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) packaging/debian/build-deb.sh
+          dpkg-deb --info dist/*.deb
+          dpkg-deb --contents dist/*.deb
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          awk -v v="$VER" '$0 ~ "^## " {p = index($0, v) > 0; next} p' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" dist/*.deb --title "Kachaning $VER" --notes-file notes.md
+
+      - name: Update apt repository (gh-pages)
+        env:
+          APT_GPG_KEY: ${{ secrets.APT_GPG_KEY }}
+        run: |
+          test -n "$APT_GPG_KEY" || { echo "::error::secret APT_GPG_KEY is not set"; exit 1; }
+          printf '%s\n' "$APT_GPG_KEY" | gpg --batch --import
+          FPR=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
+          cmp -s <(gpg --export "$FPR") packaging/debian/kachaning-archive-keyring.gpg \
+            || { echo "::error::APT_GPG_KEY does not match packaging/debian/kachaning-archive-keyring.gpg"; exit 1; }
+          if git fetch -q origin gh-pages; then
+            git worktree add pages FETCH_HEAD
+          else
+            git worktree add --detach pages && git -C pages checkout -q --orphan gh-pages && git -C pages rm -rqf --ignore-unmatch .
+          fi
+          scripts/update-apt-repo.sh pages "$PWD/$(ls dist/*.deb)" "$FPR"
+          cd pages
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "apt: kachaning $VER"
+          git push -q origin HEAD:gh-pages
+
+      - name: Update AUR
+        if: env.AUR_SSH_KEY != ''
+        run: |
+          install -dm700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur && chmod 600 ~/.ssh/aur
+          ssh-keyscan -t ed25519 aur.archlinux.org > ~/.ssh/known_hosts 2>/dev/null
+          printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n  IdentitiesOnly yes\n' > ~/.ssh/config
+          packaging/arch/publish-aur.sh "$VER"

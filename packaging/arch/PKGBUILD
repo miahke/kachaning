@@ -1,0 +1,28 @@
+# Maintainer: miahke <https://github.com/miahke>
+pkgname=kachaning
+pkgver=2.3.0
+pkgrel=1
+pkgdesc="Remote help between friends over Tailscale: SSH access and time-limited admin rights (GTK)"
+arch=('any')
+url="https://github.com/miahke/kachaning"
+license=('GPL-3.0-or-later')
+depends=('python' 'python-gobject' 'gtk3' 'polkit' 'openssh' 'sudo')
+optdepends=('tailscale: installed automatically during setup if missing'
+            'libnotify: key expiry notifications'
+            'xdg-utils: opening sign-in and admin pages')
+install=kachaning.install
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+# в репозитории — SKIP; настоящую сумму архива подставляет packaging/arch/publish-aur.sh
+sha256sums=('SKIP')
+
+check() {
+  cd "$pkgname-$pkgver"
+  python -m py_compile kachaning.py
+  python tests/test_core.py
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  ./scripts/install-files.sh "$pkgdir"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

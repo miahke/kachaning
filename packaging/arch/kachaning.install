@@ -1,0 +1,12 @@
+post_install() {
+  /usr/share/kachaning/pkg-hook.sh install
+  echo "Kachaning: start it from the app menu. The setup wizard opens on first launch."
+}
+
+post_upgrade() {
+  /usr/share/kachaning/pkg-hook.sh install
+}
+
+pre_remove() {
+  /usr/share/kachaning/pkg-hook.sh remove
+}

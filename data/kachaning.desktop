@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Kachaning
+Name[ru]=Качанинг
+GenericName=Remote help
+GenericName[ru]=Удалённая помощь
+Comment=Remote help over Tailscale
+Comment[ru]=Удалённая помощь через Tailscale
+Exec=kachaning
+Icon=kachaning
+Terminal=false
+Categories=Network;RemoteAccess;System;
+Keywords=tailscale;ssh;remote;help;
+Keywords[ru]=tailscale;ssh;удалённый;помощь;
+StartupNotify=true
+StartupWMClass=kachaning

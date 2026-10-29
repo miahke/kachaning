@@ -1,0 +1,2 @@
+# Обновления Качанинга (https://github.com/miahke/kachaning)
+deb [signed-by=/usr/share/keyrings/kachaning-archive-keyring.gpg] https://miahke.github.io/kachaning stable main
