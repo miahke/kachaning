@@ -13,8 +13,6 @@ concurrency: release
 jobs:
   release:
     runs-on: ubuntu-24.04
-    env:
-      AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,10 +63,16 @@ jobs:
           git push -q origin HEAD:gh-pages
 
       - name: Update AUR
-        if: env.AUR_SSH_KEY != ''
+        # секрет виден только этому шагу; без секрета шаг молча пропускается
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
         run: |
+          if [ -z "$AUR_SSH_KEY" ]; then echo "AUR_SSH_KEY is not set, skipping"; exit 0; fi
           install -dm700 ~/.ssh
           printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur && chmod 600 ~/.ssh/aur
           ssh-keyscan -t ed25519 aur.archlinux.org > ~/.ssh/known_hosts 2>/dev/null
+          # отпечаток хост-ключа AUR сверяется с опубликованным на https://wiki.archlinux.org/title/AUR_submission_guidelines
+          ssh-keygen -lf ~/.ssh/known_hosts | grep -q 'SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4' \
+            || { echo "::error::AUR host key fingerprint mismatch"; exit 1; }
           printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n  IdentitiesOnly yes\n' > ~/.ssh/config
           sh packaging/arch/publish-aur.sh "$VER"
