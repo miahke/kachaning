@@ -1,0 +1,22 @@
+Package: kachaning
+Architecture: all
+Version: 2.3.0
+Priority: optional
+Section: net
+Maintainer: miahke <https://github.com/miahke>
+Installed-Size: 348
+Depends: python3 (>= 3.8), python3-gi, gir1.2-gtk-3.0, pkexec | policykit-1, openssh-client, sudo, systemd
+Recommends: openssh-server, libnotify-bin, xdg-utils
+Suggests: tailscale
+Filename: pool/main/k/kachaning/kachaning_2.3.0_all.deb
+Size: 60948
+MD5sum: 30271eff0d4ae589068b6dfb8d5af2b3
+SHA1: 06653b0c29ef00a7393573859c093f03e39bff47
+SHA256: 3434af54833cda489176def2a5506b5c17842f0419b64013e70fd7f4dcfc4b91
+SHA512: b63c29a89f9a84c980aaef49406d9d0ea4aa3f6ec3d7c3c8735fc8e219080525552201478781faf36ad22aaee5194236e59dbe5a11e6cdc5350f12e4c4a831b6
+Homepage: https://github.com/miahke/kachaning
+Description: remote help between friends over Tailscale
+ GTK app for helping a friend with their Linux PC: SSH access over Tailscale,
+ time-limited administrator rights that are revoked automatically, key
+ management and a connection checklist. Russian and English interface.
+
