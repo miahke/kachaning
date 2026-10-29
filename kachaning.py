@@ -46,7 +46,7 @@ import time
 import urllib.request
 import uuid
 
-VERSION = "2.3.0"
+VERSION = "2.3.1"
 CONFIG_DIR = os.path.expanduser("~/.config/kachaning")
 CONFIG_FILE = CONFIG_DIR + "/config.json"
 

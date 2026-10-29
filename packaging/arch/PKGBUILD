@@ -1,6 +1,6 @@
 # Maintainer: miahke <https://github.com/miahke>
 pkgname=kachaning
-pkgver=2.3.0
+pkgver=2.3.1
 pkgrel=1
 pkgdesc="Remote help between friends over Tailscale: SSH access and time-limited admin rights (GTK)"
 arch=('any')
