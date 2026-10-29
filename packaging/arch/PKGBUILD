@@ -23,6 +23,6 @@ check() {
 
 package() {
   cd "$pkgname-$pkgver"
-  ./scripts/install-files.sh "$pkgdir"
+  sh scripts/install-files.sh "$pkgdir"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

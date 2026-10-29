@@ -32,7 +32,7 @@ jobs:
 
       - name: Build .deb
         run: |
-          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) packaging/debian/build-deb.sh
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) sh packaging/debian/build-deb.sh
           dpkg-deb --info dist/*.deb
           dpkg-deb --contents dist/*.deb
 
@@ -57,7 +57,7 @@ jobs:
           else
             git worktree add --detach pages && git -C pages checkout -q --orphan gh-pages && git -C pages rm -rqf --ignore-unmatch .
           fi
-          scripts/update-apt-repo.sh pages "$PWD/$(ls dist/*.deb)" "$FPR"
+          sh scripts/update-apt-repo.sh pages "$PWD/$(ls dist/*.deb)" "$FPR"
           cd pages
           git add -A
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
@@ -71,4 +71,4 @@ jobs:
           printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur && chmod 600 ~/.ssh/aur
           ssh-keyscan -t ed25519 aur.archlinux.org > ~/.ssh/known_hosts 2>/dev/null
           printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n  IdentitiesOnly yes\n' > ~/.ssh/config
-          packaging/arch/publish-aur.sh "$VER"
+          sh packaging/arch/publish-aur.sh "$VER"

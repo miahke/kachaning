@@ -9,7 +9,7 @@ trap 'rm -rf "$WORK"' EXIT
 R="$WORK/root"
 C="$WORK/control"
 
-scripts/install-files.sh "$R"
+sh scripts/install-files.sh "$R"
 install -Dm644 LICENSE "$R/usr/share/doc/kachaning/copyright"
 # apt-источник: после установки .deb обновления приходят через «Менеджер обновлений»
 install -Dm644 packaging/debian/kachaning.list "$R/etc/apt/sources.list.d/kachaning.list"

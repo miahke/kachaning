@@ -17,13 +17,13 @@ jobs:
       - name: Tests
         run: python3 tests/test_core.py
       - name: Build .deb
-        run: packaging/debian/build-deb.sh
+        run: sh packaging/debian/build-deb.sh
       - name: Install from apt repository
         run: |
           export GNUPGHOME=$(mktemp -d)
           gpg --batch --passphrase '' --quick-gen-key 'CI test <ci@example.invalid>' ed25519 sign 1d
           FPR=$(gpg --list-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
-          scripts/update-apt-repo.sh /tmp/repo "$PWD/$(ls dist/*.deb)" "$FPR"
+          sh scripts/update-apt-repo.sh /tmp/repo "$PWD/$(ls dist/*.deb)" "$FPR"
           sudo cp /tmp/repo/kachaning-archive-keyring.gpg /usr/share/keyrings/ci-test.gpg
           echo "deb [signed-by=/usr/share/keyrings/ci-test.gpg] file:///tmp/repo stable main" | sudo tee /etc/apt/sources.list.d/ci-test.list
           sudo apt-get update -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ci-test.list -o Dir::Etc::sourceparts=-
