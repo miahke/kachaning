@@ -20,3 +20,25 @@ Description: remote help between friends over Tailscale
  time-limited administrator rights that are revoked automatically, key
  management and a connection checklist. Russian and English interface.
 
+Package: kachaning
+Architecture: all
+Version: 2.3.1
+Priority: optional
+Section: net
+Maintainer: miahke <https://github.com/miahke>
+Installed-Size: 348
+Depends: python3 (>= 3.8), python3-gi, gir1.2-gtk-3.0, pkexec | policykit-1, openssh-client, sudo, systemd
+Recommends: openssh-server, libnotify-bin, xdg-utils
+Suggests: tailscale
+Filename: pool/main/k/kachaning/kachaning_2.3.1_all.deb
+Size: 60960
+MD5sum: bb2f9b3f5d0fba7b08b467f8db1d7f11
+SHA1: 37ac5e3c020996ce164abf6be144e3322746ecd0
+SHA256: 81d0e767ee302da4ffe461a5af35be6ed7c7f450eb4685e361a2fd82991e7ea7
+SHA512: 57b6d3d03ba3777490e1737516a97ce39eefdd1e3759b26e3eaad3a7a0c19036811bc11eb6e900d88537593c156b09dffa22df71477f0555e47aaafddd537b3e
+Homepage: https://github.com/miahke/kachaning
+Description: remote help between friends over Tailscale
+ GTK app for helping a friend with their Linux PC: SSH access over Tailscale,
+ time-limited administrator rights that are revoked automatically, key
+ management and a connection checklist. Russian and English interface.
+
