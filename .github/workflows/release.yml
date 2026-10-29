@@ -76,3 +76,49 @@ jobs:
             || { echo "::error::AUR host key fingerprint mismatch"; exit 1; }
           printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n  IdentitiesOnly yes\n' > ~/.ssh/config
           sh packaging/arch/publish-aur.sh "$VER"
+
+  # pacman-репозиторий для Arch: https://miahke.github.io/kachaning/arch
+  arch-repo:
+    needs: release
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    permissions:
+      contents: write
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed python python-gobject gtk3 polkit openssh sudo git gnupg
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build package
+        run: |
+          git config --global --add safe.directory "$PWD"
+          VER=$(python kachaning.py --version)
+          useradd -m builder
+          mkdir /build
+          tar --exclude=./.git --transform "s,^\.,kachaning-$VER," -czf /build/src.tar.gz .
+          sed -e 's|^source=.*|source=("src.tar.gz")|' packaging/arch/PKGBUILD > /build/PKGBUILD
+          cp packaging/arch/kachaning.install /build/
+          chown -R builder /build
+          su builder -c 'cd /build && makepkg --noconfirm'
+          cp /build/kachaning-*.pkg.tar.zst .
+
+      - name: Update pacman repository (gh-pages)
+        env:
+          APT_GPG_KEY: ${{ secrets.APT_GPG_KEY }}
+        run: |
+          test -n "$APT_GPG_KEY" || { echo "::error::secret APT_GPG_KEY is not set"; exit 1; }
+          printf '%s\n' "$APT_GPG_KEY" | gpg --batch --import
+          FPR=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
+          cmp -s <(gpg --export "$FPR") packaging/debian/kachaning-archive-keyring.gpg \
+            || { echo "::error::APT_GPG_KEY does not match packaging/debian/kachaning-archive-keyring.gpg"; exit 1; }
+          git fetch -q origin gh-pages
+          git worktree add pages FETCH_HEAD
+          sh scripts/update-pacman-repo.sh pages "$PWD/$(ls kachaning-*.pkg.tar.zst)" "$FPR"
+          cd pages
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "pacman: kachaning $(python ../kachaning.py --version)"
+          git push -q origin HEAD:gh-pages

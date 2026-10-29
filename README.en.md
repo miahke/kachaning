@@ -13,13 +13,31 @@ Remote help between friends on Linux. One person helps, the other accepts help, 
 
 ## Install
 
-### Arch, CachyOS, Manjaro, EndeavourOS — from the AUR
+### Arch, CachyOS, Manjaro, EndeavourOS — own pacman repository
+
+Add the repository key and the repository once:
 
 ```bash
-yay -S kachaning
+curl -fsSL https://miahke.github.io/kachaning/kachaning-archive-keyring.gpg | sudo pacman-key --add -
 ```
 
-Or `paru -S kachaning`. Updates come with the rest of the system: `yay -Syu`.
+```bash
+sudo pacman-key --lsign-key 0504ADA5305E316D8D6BC7B65E85D3F41F4E99E0
+```
+
+```bash
+printf '\n[kachaning]\nSigLevel = Required DatabaseRequired\nServer = https://miahke.github.io/kachaning/arch\n' | sudo tee -a /etc/pacman.conf
+```
+
+Then install as usual; updates come with `pacman -Syu`:
+
+```bash
+sudo pacman -Syu kachaning
+```
+
+Key fingerprint: `0504 ADA5 305E 316D 8D6B  C7B6 5E85 D3F4 1F4E 99E0`. Compare it with what `pacman-key` shows before trusting the key.
+
+There is no AUR package yet. To build from source: `git clone https://github.com/miahke/kachaning`, then `cd kachaning/packaging/arch && makepkg -si` (the PKGBUILD source is the GitHub tag).
 
 ### Linux Mint, Ubuntu, Debian, Pop!_OS
 
@@ -90,7 +108,7 @@ packaging/debian/build-deb.sh
 cd packaging/arch && makepkg -si
 ```
 
-To release: add a section to `CHANGELOG.md`, then run `scripts/release.sh X.Y.Z`. The tag triggers GitHub Actions: build the `.deb`, create the release, update the apt repository on GitHub Pages, update the AUR. See [RELEASING.md](RELEASING.md).
+To release: add a section to `CHANGELOG.md`, then run `scripts/release.sh X.Y.Z`. The tag triggers GitHub Actions: build the `.deb`, create the release, update the apt repository on GitHub Pages, update the pacman repository. See [RELEASING.md](RELEASING.md).
 
 ## License
 

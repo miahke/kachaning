@@ -13,13 +13,31 @@
 
 ## Установка
 
-### Arch, CachyOS, Manjaro, EndeavourOS — из AUR
+### Arch, CachyOS, Manjaro, EndeavourOS — свой pacman-репозиторий
+
+Один раз добавьте ключ репозитория и сам репозиторий:
 
 ```bash
-yay -S kachaning
+curl -fsSL https://miahke.github.io/kachaning/kachaning-archive-keyring.gpg | sudo pacman-key --add -
 ```
 
-Или `paru -S kachaning`. Обновляется вместе с системой: `yay -Syu`.
+```bash
+sudo pacman-key --lsign-key 0504ADA5305E316D8D6BC7B65E85D3F41F4E99E0
+```
+
+```bash
+printf '\n[kachaning]\nSigLevel = Required DatabaseRequired\nServer = https://miahke.github.io/kachaning/arch\n' | sudo tee -a /etc/pacman.conf
+```
+
+Дальше обычная установка, а обновления приходят с `pacman -Syu`:
+
+```bash
+sudo pacman -Syu kachaning
+```
+
+Отпечаток ключа: `0504 ADA5 305E 316D 8D6B  C7B6 5E85 D3F4 1F4E 99E0`. Сверьте его с тем, что показал `pacman-key`, прежде чем доверять ключу.
+
+Пакета в AUR пока нет. Из исходников можно собрать так: `git clone https://github.com/miahke/kachaning`, затем `cd kachaning/packaging/arch && makepkg -si` (источник в PKGBUILD — тег на GitHub).
 
 ### Linux Mint, Ubuntu, Debian, Pop!_OS
 
@@ -90,7 +108,7 @@ packaging/debian/build-deb.sh
 cd packaging/arch && makepkg -si
 ```
 
-Выпуск версии: добавить раздел в `CHANGELOG.md`, затем `scripts/release.sh X.Y.Z`. Тег запускает GitHub Actions: сборка `.deb`, релиз, обновление apt-репозитория на GitHub Pages, обновление AUR. Подробнее — [RELEASING.md](RELEASING.md).
+Выпуск версии: добавить раздел в `CHANGELOG.md`, затем `scripts/release.sh X.Y.Z`. Тег запускает GitHub Actions: сборка `.deb`, релиз, обновление apt-репозитория на GitHub Pages, обновление pacman-репозитория. Подробнее — [RELEASING.md](RELEASING.md).
 
 ## Лицензия
 

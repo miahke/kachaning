@@ -60,3 +60,20 @@ jobs:
           test "$(kachaning --version)" = "$(python kachaning.py --version)"
           pacman -R --noconfirm kachaning
           test ! -e /usr/share/kachaning
+
+      - name: Signed pacman repository end to end
+        run: |
+          pacman -S --noconfirm --needed gnupg
+          export GNUPGHOME=$(mktemp -d)
+          gpg --batch --passphrase '' --quick-gen-key 'CI test <ci@example.invalid>' ed25519 sign 1d
+          FPR=$(gpg --list-keys --with-colons | awk -F: '/^fpr/ {print $10; exit}')
+          gpg --export "$FPR" > /tmp/ci-pub.gpg
+          cp /build/kachaning-*.pkg.tar.zst /tmp/
+          sh scripts/update-pacman-repo.sh /tmp/pages /tmp/kachaning-*.pkg.tar.zst "$FPR"
+          unset GNUPGHOME
+          pacman-key --init
+          pacman-key --add /tmp/ci-pub.gpg
+          pacman-key --lsign-key "$FPR"
+          printf '\n[kachaning]\nSigLevel = Required DatabaseRequired\nServer = file:///tmp/pages/arch\n' >> /etc/pacman.conf
+          pacman -Sy --noconfirm kachaning
+          test "$(kachaning --version)" = "$(python kachaning.py --version)"

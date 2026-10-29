@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.1
+
+- Signed pacman repository for Arch-based systems on GitHub Pages (`https://miahke.github.io/kachaning/arch`).
+- CI hardening; README installation instructions corrected.
+
 ## 2.3.0
 
 - First public release.
