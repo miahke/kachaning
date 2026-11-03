@@ -28,10 +28,13 @@ import base64
 import colorsys
 import datetime as dt
 import getpass
+import fcntl
+import functools
 import glob
 import html
 import ipaddress
 import json
+import math
 import os
 import pwd
 import re
@@ -805,9 +808,9 @@ def access_text(admin):
     if not isinstance(admin, dict) or admin.get("granted") is not True:
         return None
     exp = admin.get("expires")
-    if not exp:
+    if exp is None and "expires" in admin:
         return tr("бессрочно")
-    if not isinstance(exp, (int, float)):
+    if type(exp) not in (int, float) or not math.isfinite(exp):
         return None
     left = exp - time.time()
     if left <= 0:
@@ -1072,7 +1075,7 @@ def _other_lines(body):
     try:
         with open(AUTH_KEYS) as f:
             lines = f.read().splitlines()
-    except OSError:
+    except FileNotFoundError:
         return []
     return [l for l in lines if (parse_key_line(l) or {}).get("body") != body]
 
@@ -1550,7 +1553,7 @@ def apt_install(*pkgs):
 def pkg_install(debian_pkgs, arch_pkgs):
     if shutil.which("apt-get"):
         return apt_install(*debian_pkgs)
-    for cmd in (["pacman", "-Sy", "--noconfirm", "--needed", *arch_pkgs],
+    for cmd in (["pacman", "-S", "--noconfirm", "--needed", *arch_pkgs],
                 ["dnf", "install", "-y", *debian_pkgs], ["zypper", "--non-interactive", "install", *debian_pkgs]):
         if shutil.which(cmd[0]):
             rc, out, err = run(cmd, timeout=1200)
@@ -1731,7 +1734,7 @@ def s_guard():
         shutil.copyfile(src, ROOT_COPY)
         os.chown(ROOT_COPY, 0, 0)
         os.chmod(ROOT_COPY, 0o755)
-    elif os.path.isdir(ROOT_DIR):
+    elif PACKAGED and os.path.isdir(ROOT_DIR):
         shutil.rmtree(ROOT_DIR, ignore_errors=True)  # копия от установки без пакета больше не нужна
     with open("/etc/systemd/system/kachaning-expire.service", "w") as f:
         f.write(tr("[Unit]\nDescription={0}: снять истёкшие права администратора\n\n[Service]\nType=oneshot\nExecStart={1} -I {2} --root expire-check\n").format(APP_NAME, root_python(), ROOT_COPY))
@@ -1799,6 +1802,30 @@ def s_login(user, force=False):
     return "err", tr("вход не завершён — повтори и войди в браузере")
 
 
+_admin_mutex = threading.RLock()
+_admin_local = threading.local()
+ADMIN_LOCK = "/run/lock/kachaning-admin.lock"
+
+
+def serialized_admin(fn):
+    """Serialize sudoers/state updates across timer and GUI root processes."""
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        with _admin_mutex:
+            if getattr(_admin_local, "locked", False):
+                return fn(*args, **kwargs)
+            fd = os.open(ADMIN_LOCK, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+                _admin_local.locked = True
+                return fn(*args, **kwargs)
+            finally:
+                _admin_local.locked = False
+                os.close(fd)
+    return wrapped
+
+
+@serialized_admin
 def grant_until(user, expires):
     body = (tr("# Создано программой «{0}». Снимается кнопкой «Отозвать»\n# или автоматически по истечении срока (kachaning-expire.timer).\n{1} ALL=(ALL:ALL) NOPASSWD: ALL\n").format(APP_NAME, user))
     tmp = SUDOERS_FILE + ".tmp"   # файлы с точкой в имени sudo игнорирует
@@ -1821,6 +1848,7 @@ def grant_until(user, expires):
     return "ok", tr("выданы на {0}").format(fmt_span(expires - time.time())) if expires else tr("выданы бессрочно")
 
 
+@serialized_admin
 def root_revoke():
     for p in (SUDOERS_FILE, LEGACY["sudoers"]):
         try:
@@ -1841,11 +1869,15 @@ def grant_for(user, secs):
     return grant_until(user, time.time() + secs if secs else None)
 
 
+@serialized_admin
 def root_expire_check():
     adm = read_state().get("admin")
     adm = adm if isinstance(adm, dict) else {}
     exp = adm.get("expires")
-    if adm.get("granted") is True and isinstance(exp, (int, float)) and time.time() > exp:
+    valid = (type(exp) in (int, float) and math.isfinite(exp) and exp > 0)
+    # Only an explicit null expiry means an intentional unlimited grant.
+    invalid = "expires" not in adm or (exp is not None and not valid)
+    if adm.get("granted") is True and (invalid or (valid and time.time() >= exp)):
         root_revoke()
         print(tr("{0}: срок прав истёк, права сняты").format(APP_NAME))
     elif adm.get("granted") is not True and os.path.exists(SUDOERS_FILE):

@@ -15,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Tests
-        run: python3 tests/test_core.py
+        run: |
+          python3 tests/test_core.py
+          python3 tests/test_security.py
       - name: Build .deb
         run: sh packaging/debian/build-deb.sh
       - name: Install from apt repository
