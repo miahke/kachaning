@@ -113,3 +113,5 @@ cd packaging/arch && makepkg -si
 ## Лицензия
 
 [GPL-3.0-or-later](LICENSE) © 2026 miahke
+
+Участники проекта: [CONTRIBUTORS.md](CONTRIBUTORS.md).

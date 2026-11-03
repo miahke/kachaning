@@ -13,6 +13,7 @@ git rev-parse -q --verify "refs/tags/v$VER" >/dev/null && { echo "tag v$VER alre
 sed -i "s/^VERSION = \".*\"/VERSION = \"$VER\"/" kachaning.py
 sed -i -e "s/^pkgver=.*/pkgver=$VER/" -e "s/^pkgrel=.*/pkgrel=1/" packaging/arch/PKGBUILD
 python3 tests/test_core.py >/dev/null
+python3 tests/test_security.py
 git commit -qam "Release $VER"
 git tag -a "v$VER" -m "Kachaning $VER"
 echo "Ready: commit and tag v$VER."

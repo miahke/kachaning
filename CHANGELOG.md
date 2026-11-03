@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.3.2
+
+- Preserve the standalone root helper when configuring its expiry timer again.
+- Abort SSH key edits on read errors instead of overwriting other authorized keys.
+- Revoke administrator grants with invalid or missing expiry data.
+- Serialize administrator grant, revoke and expiry operations across processes.
+- Avoid partial Arch upgrades during dependency installation.
+- Add security regression tests, document persistent SSH/sudo access and credit contributors.
+
 ## 2.3.1
 
 - Signed pacman repository for Arch-based systems on GitHub Pages (`https://miahke.github.io/kachaning/arch`).

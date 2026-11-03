@@ -113,3 +113,5 @@ To release: add a section to `CHANGELOG.md`, then run `scripts/release.sh X.Y.Z`
 ## License
 
 [GPL-3.0-or-later](LICENSE) © 2026 miahke
+
+Project contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md).
